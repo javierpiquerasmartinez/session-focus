@@ -1,0 +1,6 @@
+# Material generado: no se versiona (ver docs/sesiones.md)
+media/
+.env
+.venv/
+__pycache__/
+.DS_Store

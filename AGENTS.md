@@ -1,5 +1,14 @@
 # session-focus
 
+Taller del canal de YouTube **Lamplight** (vídeos de estudio con Escena en bucle y música lofi generadas con IA). El vocabulario está en `GLOSSARY.md`; úsalo al hablar con el usuario y al escribir en el repo. El usuario escribe en español; los prompts y los metadatos de YouTube van en inglés.
+
+## Trabajo con Sesiones
+
+- Registro, estados y rutas de `media/`: `docs/sesiones.md`.
+- Identidad visual y cómo escribir prompts de imagen, Bucle, Pistas y metadatos: `docs/hilo-conductor.md`.
+- Flujo completo: skills `/nueva-sesion` y `/montaje`.
+- `scripts/generar.py` gasta dinero de la cuenta del usuario: lánzalo con `--si` solo tras enseñarle el coste estimado y recibir su aprobación para esa ejecución.
+
 ## Agent skills
 
 ### Issue tracker
