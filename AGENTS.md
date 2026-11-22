@@ -7,6 +7,7 @@ Taller del canal de YouTube **Lamplight Sessions** (@Lamplight-sessions) (vídeo
 - Registro, estados y rutas de `media/`: `docs/sesiones.md`.
 - Identidad visual y cómo escribir prompts de imagen, Bucle, Pistas y metadatos: `docs/hilo-conductor.md`.
 - Flujo completo: skills `/nueva-sesion` y `/montaje`.
+- Descripción del canal y recursos de marca: `docs/canal.md`.
 - `scripts/generar.py` gasta dinero de la cuenta del usuario: lánzalo con `--si` solo tras enseñarle el coste estimado y recibir su aprobación para esa ejecución.
 
 ## Agent skills

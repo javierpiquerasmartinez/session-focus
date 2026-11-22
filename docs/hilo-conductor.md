@@ -51,4 +51,5 @@ En inglés.
 - **Título**: `<Escena evocadora> | <duración> lofi for study & focus | Lamplight Sessions` (p. ej. "Rainy Night in Tokyo from the 30th Floor | 2 Hours lofi for Study & Focus | Lamplight Sessions"). Máximo unos 90 caracteres.
 - **Descripción**: dos o tres frases que sitúen la Escena, la lista de capítulos (salida de `/montaje`), una línea de que imagen y música están generadas con IA, y unos 3 hashtags.
 - **Etiquetas**: 10–15, mezcla de genéricas (lofi, study music, focus music) y de la Escena (tokyo rain, night city).
-- **Miniatura**: un fotograma de `imagen.png` con 2–4 palabras grandes ("RAINY TOKYO NIGHT"). Al subir, marca el contenido como alterado o sintético.
+- **Miniatura**: 2–4 palabras entre comillas en la línea **Miniatura** del registro ("RAINY TOKYO NIGHT"); `scripts/miniatura.swift` las compone sobre la imagen en tres variantes con la tipografía del canal (Baskerville crema + Avenir ámbar) y la lámpara como sello. Las tres se suben en "Probar y comparar" de YouTube Studio y se anota en Notas cuál ganó, para ir aprendiendo qué funciona.
+- Al subir, marca el contenido como alterado o sintético.

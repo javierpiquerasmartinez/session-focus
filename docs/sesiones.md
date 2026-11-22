@@ -40,7 +40,8 @@ media/0001-tokyo-rain-30th-floor/
 ├── pistas/01.mp3 …     ← las Pistas, en el orden en que sonarán
 ├── candidatas/         ← variantes generadas y descartadas
 ├── montaje.mp4         ← salida de /montaje
-└── capitulos.txt       ← salida de /montaje
+├── capitulos.txt       ← salida de /montaje
+└── miniatura-a/b/c.jpg ← salida de scripts/miniatura.swift (texto grande, discreto, sin texto)
 ```
 
 Da igual si el material lo genera el usuario a mano en AI Studio o `scripts/generar.py`: acaba en las mismas rutas.

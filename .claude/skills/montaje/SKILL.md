@@ -20,13 +20,16 @@ Pide al usuario los títulos de las Pistas o propón unos en inglés acordes con
 
 Ejecuta `python3 scripts/montaje.py NNNN` en segundo plano (una Sesión de 2 h tarda unos minutos). La duración sale del frontmatter (`duracion`).
 
+Mientras tanto, genera las miniaturas con `swift scripts/miniatura.swift NNNN`: tres variantes (`miniatura-a/b/c.jpg`: texto grande, texto discreto, sin texto) a partir de la imagen y del texto entre comillas de la línea **Miniatura** del registro. Ábrelas y comprueba que el texto no tape nada importante de la Escena; si choca, ajusta el texto con `--texto` o díselo al usuario.
+
 ## 3. Cerrar
 
 Hecho cuando todo esto es cierto:
 
 - `montaje.mp4` existe con la duración esperada (la imprime el script).
+- Existen las tres miniaturas.
 - La descripción de YouTube del registro incluye el contenido de `capitulos.txt`.
 - En Notas queda constancia de lo aprendido (qué prompt funcionó, cuántas candidatas hizo falta descartar).
 - `estado: montada`.
 
-Recuérdale al usuario que lo vea y escuche antes de subirlo (tú no puedes reproducirlo), que marque el contenido como alterado o sintético al subirlo, y que después te pase el enlace para poner `estado: publicada` y rellenar `youtube` y `publicada`.
+Recuérdale al usuario que lo vea y escuche antes de subirlo (tú no puedes reproducirlo), que marque el contenido como alterado o sintético al subirlo, que suba las tres miniaturas en "Probar y comparar", y que después te pase el enlace para poner `estado: publicada` y rellenar `youtube` y `publicada`.
