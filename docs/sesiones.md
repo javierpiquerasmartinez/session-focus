@@ -45,3 +45,7 @@ media/0001-tokyo-rain-30th-floor/
 ```
 
 Da igual si el material lo genera el usuario a mano en AI Studio o `scripts/generar.py`: acaba en las mismas rutas.
+
+### Limpieza tras publicar
+
+Una vez `publicada`, se borra lo que se puede regenerar o ya no sirve: `montaje.mp4`, `vista-previa-bucle.mp4`, `union-bucle.png`, `capitulos.txt` (ya está en la descripción del registro) y `candidatas/`. Se conservan `imagen`, `bucle.mp4` y `pistas/` (con ellos `/montaje` rehace el vídeo en minutos) y las miniaturas (para "Probar y comparar"). Los originales que el usuario descargó y ya están copiados aquí van a la Papelera tras comprobar que son idénticos.

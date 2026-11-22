@@ -1,10 +1,10 @@
 ---
 numero: "0001"
 slug: tokyo-rain-30th-floor
-estado: montada
+estado: publicada
 creada: 2026-11-22
-publicada:
-youtube:
+publicada: 2026-11-22
+youtube: https://youtu.be/-S6iokwNLeE
 duracion: 2h
 pistas: 10
 ejes:
@@ -140,3 +140,4 @@ Primera Sesión del canal.
 - **Pistas 05–10** (prompts 1, 2, 3, 4, 1, 4): mismo perfil, −12,2 a −12,8 LUFS. Banda sonora de unos 29 min que suena 5 veces.
 - **Montaje**: 2:00:00, 1080p, 4,1 GB, 3,5 min de proceso. Unión del Bucle limpia dentro del archivo final, −14,1 LUFS en conjunto, pico −0,4 dBFS, sin silencios. 42 capítulos.
 - **Cambio de enfoque**: el cierre del Bucle lo hace ahora el Montaje con un fundido de 1,5 s, así que basta con imagen → vídeo con una sola imagen. El prompt de vídeo insiste en trípode y objetos inmóviles.
+- **Publicación** (2026-11-22): pública al momento, sin reclamaciones de derechos de autor. Subida solo con `miniatura-a.jpg`: "Probar y comparar" no estaba disponible hasta verificar la cuenta. **Pendiente**: activar la comparación de las tres miniaturas cuando YouTube verifique la cuenta y anotar aquí cuál gana. Pantalla final: Suscribirse arriba a la derecha y "Mejor opción para el usuario" abajo a la derecha.
