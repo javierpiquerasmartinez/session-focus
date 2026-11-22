@@ -8,7 +8,7 @@ Taller del canal de YouTube **Lamplight Sessions** (@Lamplight-sessions) (vídeo
 - Identidad visual y cómo escribir prompts de imagen, Bucle, Pistas y metadatos: `docs/hilo-conductor.md`.
 - Flujo completo: skills `/nueva-sesion` y `/montaje`.
 - Descripción del canal y recursos de marca: `docs/canal.md`.
-- `scripts/generar.py` gasta dinero de la cuenta del usuario: lánzalo con `--si` solo tras enseñarle el coste estimado y recibir su aprobación para esa ejecución.
+- `scripts/generar.py` gasta dinero de la cuenta del usuario: lánzalo con `--si` solo tras enseñarle el coste estimado y recibir su aprobación para esa ejecución. Tiene un límite de 5 $ por ejecución y 20 $ al mes (sumando `gastos.csv`, que se versiona); no subas ninguno sin que el usuario lo pida. Nunca leas, muestres ni copies la clave de `.env`.
 
 ## Agent skills
 

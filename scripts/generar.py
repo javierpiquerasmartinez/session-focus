@@ -1,11 +1,11 @@
 # /// script
-# requires-python = ">=3.10"
-# dependencies = ["google-genai"]
+# requires-python = ">=3.12"
+# dependencies = ["google-genai>=3.6"]
 # ///
 """Generación automática del material de una Sesión con la API de Gemini.
 
 Uso (siempre con uv, que instala la dependencia aislada):
-    uv run scripts/generar.py imagen 0001 --n 3   # candidatas en candidatas/imagen-NN.png
+    uv run scripts/generar.py imagen 0001 --n 3   # candidatas en candidatas/imagen-NN.jpg
     uv run scripts/generar.py bucle 0001          # candidata en candidatas/bucle-NN.mp4
     uv run scripts/generar.py pistas 0001         # completa pistas/NN.mp3 hasta `pistas:`
 
@@ -19,6 +19,8 @@ La clave se lee de GEMINI_API_KEY (entorno o archivo .env en la raíz del repo).
 
 import argparse
 import base64
+import csv
+import datetime
 import os
 import re
 import sys
@@ -36,7 +38,26 @@ PRECIO_VIDEO_SEGUNDO = 0.07  # por segundo a 720p (el 1080p de Omni vibra; ver d
 MODELO_MUSICA = "lyria-3.5"
 PRECIO_PISTA = 0.08  # por Pista
 
-LIMITE_POR_DEFECTO = 5.0
+LIMITE_POR_DEFECTO = 5.0  # $ por ejecución
+LIMITE_MENSUAL = 20.0  # $ por mes natural, sumando gastos.csv
+GASTOS = RAIZ / "gastos.csv"  # registro versionado de cada ejecución real
+
+
+def gasto_del_mes() -> float:
+    if not GASTOS.exists():
+        return 0.0
+    mes = datetime.date.today().strftime("%Y-%m")
+    with GASTOS.open(encoding="utf-8") as f:
+        return sum(float(r["coste_usd"]) for r in csv.DictReader(f) if r["fecha"].startswith(mes))
+
+
+def anotar_gasto(sesion: str, tipo: str, modelo: str, pedidos: int, generados: int, coste: float) -> None:
+    nuevo = not GASTOS.exists()
+    with GASTOS.open("a", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        if nuevo:
+            w.writerow(["fecha", "sesion", "tipo", "modelo", "pedidos", "generados", "coste_usd"])
+        w.writerow([datetime.date.today().isoformat(), sesion, tipo, modelo, pedidos, generados, f"{coste:.2f}"])
 
 
 def fallar(msg: str) -> None:
@@ -85,13 +106,17 @@ def siguiente_ruta(carpeta: Path, prefijo: str, ext: str) -> Path:
     return carpeta / f"{prefijo}{n:02d}{ext}"
 
 
-def confirmar(resumen: list, coste: float, limite: float, si: bool) -> None:
+def confirmar(resumen: list, coste: float, limite: float, limite_mensual: float, si: bool) -> None:
     print("Se va a generar:")
     for linea in resumen:
         print(f"  - {linea}")
     print(f"Coste estimado: {coste:.2f} $ (límite por ejecución: {limite:.2f} $)")
     if coste > limite:
         fallar(f"el coste estimado supera el límite; sube --limite a propósito si de verdad lo quieres")
+    mes = gasto_del_mes()
+    print(f"Gastado este mes (gastos.csv): {mes:.2f} $ de {limite_mensual:.2f} $")
+    if mes + coste > limite_mensual:
+        fallar("esta ejecución superaría el límite mensual; sube --limite-mensual a propósito si de verdad lo quieres")
     if si:
         return
     if not sys.stdin.isatty():
@@ -135,7 +160,7 @@ def generar_imagen(cliente, prompt: str, destino: Path) -> None:
     respuesta = cliente.interactions.create(
         model=MODELO_IMAGEN,
         input=prompt,
-        response_format={"type": "image", "aspect_ratio": "16:9", "image_size": "2K", "mime_type": "image/png"},
+        response_format={"type": "image", "aspect_ratio": "16:9", "image_size": "2K", "mime_type": "image/jpeg"},
     )
     guardar_salida(cliente, respuesta.output_image, destino)
 
@@ -165,6 +190,7 @@ def main() -> None:
     ap.add_argument("--segundos", type=int, default=8, help="duración del Bucle, 3–10 s (8)")
     ap.add_argument("--cantidad", type=int, help="Pistas a generar (por defecto, las que faltan hasta `pistas:`)")
     ap.add_argument("--limite", type=float, default=LIMITE_POR_DEFECTO, help="coste máximo por ejecución en $")
+    ap.add_argument("--limite-mensual", type=float, default=LIMITE_MENSUAL, help="coste máximo del mes en $ (20)")
     ap.add_argument("--si", action="store_true", help="no preguntar (solo con aprobación previa del usuario)")
     args = ap.parse_args()
 
@@ -177,7 +203,7 @@ def main() -> None:
         if not prompts:
             fallar(f"{registro.name} no tiene bloque ```imagen")
         for _ in range(args.n):
-            destino = siguiente_ruta(carpeta / "candidatas", "imagen-", ".png")
+            destino = siguiente_ruta(carpeta / "candidatas", "imagen-", ".jpg")
             destino.touch()  # reserva el nombre para la siguiente candidata
             trabajos.append((destino, lambda d=destino: generar_imagen(cliente, prompts[0], d)))
         coste = args.n * PRECIO_IMAGEN
@@ -220,11 +246,13 @@ def main() -> None:
         resumen = [f"{cantidad} Pista(s) con {MODELO_MUSICA}, rotando {len(prompts)} prompt(s)"]
 
     try:
-        confirmar(resumen, coste, args.limite, args.si)
+        confirmar(resumen, coste, args.limite, args.limite_mensual, args.si)
     except SystemExit:
         for destino, _ in trabajos:
             if destino.exists() and destino.stat().st_size == 0:
                 destino.unlink()
+            if destino.parent.exists() and not any(destino.parent.iterdir()):
+                destino.parent.rmdir()
         raise
 
     from google import genai  # importación tardía: --help y la confirmación no necesitan el SDK
@@ -241,6 +269,11 @@ def main() -> None:
                 destino.unlink()
             print(f"  falló: {e}", file=sys.stderr)
     print(f"Hecho: {len(trabajos) - fallos} de {len(trabajos)} generados en {carpeta.relative_to(RAIZ)}/")
+    # Se anota solo lo generado: las peticiones rechazadas (errores 4xx) no se cobran.
+    coste = coste * (len(trabajos) - fallos) / len(trabajos)
+    modelo = {"imagen": MODELO_IMAGEN, "bucle": MODELO_VIDEO, "pistas": MODELO_MUSICA}[args.tipo]
+    anotar_gasto(registro.stem.split("-")[0], args.tipo, modelo, len(trabajos), len(trabajos) - fallos, coste)
+    print(f"Anotado en gastos.csv: {coste:.2f} $ (estimado). Este mes: {gasto_del_mes():.2f} $")
     if fallos:
         sys.exit(1)
 

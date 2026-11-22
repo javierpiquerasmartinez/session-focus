@@ -30,7 +30,7 @@ Hecho cuando: el archivo no tiene marcadores de la plantilla sin rellenar salvo 
 
 Muestra al usuario los prompts listos para copiar y pregúntale cómo quiere generar cada parte: a mano en AI Studio o con `scripts/generar.py`.
 
-Para el modo automático: lanza primero el script **sin** `--si` (`uv run scripts/generar.py <tipo> NNNN`). Sin terminal interactiva se detiene tras imprimir qué generaría y su coste. Enseña ese resumen al usuario y vuelve a lanzarlo con `--si` solo después de que apruebe esa ejecución concreta. Orden: `imagen` (con `--n 3` para elegir) → el usuario elige y la copias como `media/NNNN-slug/imagen.png` → `bucle` → `pistas`. Puedes mirar las candidatas de imagen leyendo los PNG para opinar, pero la elección es del usuario.
+Para el modo automático: lanza primero el script **sin** `--si` (`uv run scripts/generar.py <tipo> NNNN`). Sin terminal interactiva se detiene tras imprimir qué generaría y su coste. Enseña ese resumen al usuario y vuelve a lanzarlo con `--si` solo después de que apruebe esa ejecución concreta. Orden: `imagen` (con `--n 3` para elegir) → el usuario elige y la copias como `media/NNNN-slug/imagen.jpg` → `bucle` → `pistas`. Puedes mirar las candidatas de imagen leyendo los JPG para opinar, pero la elección es del usuario.
 
 En modo manual, recuérdale la convención de rutas de `media/` de [docs/sesiones.md](../../../docs/sesiones.md).
 
