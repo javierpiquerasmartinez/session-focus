@@ -1,6 +1,6 @@
-# Lamplight
+# Lamplight Sessions
 
-Taller del canal de YouTube **Lamplight**: vídeos largos para estudiar y concentrarse, con una Escena realista y nocturna en bucle y música lofi, todo generado con IA.
+Taller del canal de YouTube **Lamplight Sessions** (@Lamplight-sessions): vídeos largos para estudiar y concentrarse, con una Escena realista y nocturna en bucle y música lofi, todo generado con IA.
 
 El repo guarda las ideas, los prompts y el registro de cada Sesión; el material (imágenes, vídeo, audio) se queda fuera de git en `media/`.
 

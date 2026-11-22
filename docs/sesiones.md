@@ -35,7 +35,7 @@ Dos Sesiones **se repiten** si coinciden en `lugar`, `clima` y `punto_de_vista` 
 
 ```
 media/0001-tokyo-rain-30th-floor/
-├── imagen.png          ← la imagen elegida (primer y último fotograma del Bucle)
+├── imagen.png          ← la imagen elegida, PNG o JPG (primer y último fotograma del Bucle)
 ├── bucle.mp4           ← el Bucle elegido
 ├── pistas/01.mp3 …     ← las Pistas, en el orden en que sonarán
 ├── candidatas/         ← variantes generadas y descartadas

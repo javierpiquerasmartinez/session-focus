@@ -1,6 +1,6 @@
 # Hilo conductor y guía de prompts
 
-La identidad visual y sonora del canal **Lamplight**, y cómo escribir los prompts de cada Sesión.
+La identidad visual y sonora del canal **Lamplight Sessions**, y cómo escribir los prompts de cada Sesión.
 
 ## Constantes (todas las Escenas)
 
@@ -28,13 +28,13 @@ Formato 16:9. Deja zonas que puedan moverse con naturalidad en el Bucle: lluvia 
 
 ## Prompt de vídeo (Gemini Omni, Bucle)
 
-La misma `imagen.png` va como primer y último fotograma, así que el prompt solo describe **movimiento ambiental sutil y cíclico**:
+Vídeo a partir de `imagen` (en AI Studio, adjuntándola una vez), **siempre en 720p**: el 1080p de Omni es un reescalado que hace vibrar la cámara a mitad del clip (comprobado en la Sesión 0001). El Montaje reescala a 1080p o más. El cierre del Bucle no depende del modelo: si el último fotograma no vuelve al primero, el Montaje lo cierra con un fundido de 1,5 s. El prompt solo describe **movimiento ambiental sutil**:
 
+- Abre con la estabilidad, que es el fallo más habitual (vibración de cámara): "The camera is mounted on a heavy tripod and stays completely motionless for the entire video: no shake, no jitter, no drift, no zoom, no parallax." y nombra los objetos que deben quedarse quietos ("The window frame, the desk, the lamp… remain perfectly still and pixel-stable").
 - Lista qué se mueve y cómo ("raindrops slowly running down the glass, distant car lights flowing far below, steam gently rising from the mug").
-- Cierra siempre con: "Static locked-off camera, no camera movement. Subtle, slow, calm motion only. The scene returns exactly to its initial state. No people. No dialogue, no music, no sound effects."
-- Evita cambios de luz globales: el inicio y el final han de coincidir.
+- Pide brillo constante en las fuentes de luz y cierra con: "Calm, peaceful motion only. No people. Silent video: no dialogue, no music, no sound effects."
 
-El audio que genere Omni se descarta en el Montaje.
+El audio que genere Omni se descarta en el Montaje. Antes de dar un Bucle por bueno, `python3 scripts/montaje.py NNNN --vista-previa` genera `vista-previa-bucle.mp4` con tres repeticiones para verlo.
 
 ## Prompts de Pistas (Lyria)
 

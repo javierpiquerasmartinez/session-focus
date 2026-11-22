@@ -10,7 +10,7 @@ Une el Bucle y las Pistas de una Sesión en su Montaje. Términos en [GLOSSARY.m
 
 ## 1. Comprobar
 
-Ejecuta `python3 scripts/montaje.py NNNN --solo-comprobar` y abre `media/NNNN-slug/union-bucle.png` (a la izquierda el último fotograma que suena, a la derecha el primero). El Bucle está listo cuando el script dice "Unión del Bucle OK" **y** en la imagen no ves diferencias de luz, posición o color entre las dos mitades. Si hay `AVISO` o diferencias visibles, díselo al usuario con lo que ves y propón regenerar el Bucle (ajustando el bloque ```bucle si el problema viene del prompt) antes de montar.
+Ejecuta `python3 scripts/montaje.py NNNN --solo-comprobar` y abre `media/NNNN-slug/union-bucle.png` (a la izquierda el último fotograma que suena, a la derecha el primero). Si la unión no cierra (`AVISO`), el script la cierra con un fundido de 1,5 s; no hace falta regenerar por eso. Lo que sí obliga a regenerar es la **vibración**: objetos que deberían estar quietos (marco de la ventana, muebles) desplazándose. Para detectarla, compara fotogramas consecutivos en una zona estática recortada (SSIM con `ffmpeg`; caídas por debajo de ~0,95 son saltos) y mira una hoja de contactos. Genera `--vista-previa` y pide al usuario que la vea antes de montar.
 
 Revisa también la lista de Pistas: duraciones parecidas y ninguna anormalmente corta (un fallo de generación). Las Pistas suenan en orden de nombre de archivo.
 

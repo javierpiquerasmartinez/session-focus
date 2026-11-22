@@ -99,7 +99,7 @@ def info_video(bucle: Path) -> Tuple[int, float, int, int]:
     return int(s["nb_read_frames"]), float(num) / float(den), int(s["width"]), int(s["height"])
 
 
-def comprobar_bucle(bucle: Path, tmp: Path) -> Tuple[int, float, bool]:
+def comprobar_bucle(bucle: Path, tmp: Path) -> Tuple[int, float, bool, bool, int]:
     frames, fps, ancho, alto = info_video(bucle)
     rutas = {}
     for nombre, indice in (("primero", 0), ("segundo", 1), ("penultimo", frames - 2), ("ultimo", frames - 1)):
@@ -121,51 +121,89 @@ def comprobar_bucle(bucle: Path, tmp: Path) -> Tuple[int, float, bool]:
     if duplicado:
         print("  El último fotograma repite el primero: se eliminará para que la unión sea fluida.")
     d_union, d_normal = 1 - s_union, 1 - s_normal
-    if d_union > d_normal * FACTOR_SALTO + 0.002:
-        print(f"  AVISO: la unión del Bucle cambia {d_union / max(d_normal, 1e-6):.2f}× más que dos fotogramas "
-              "seguidos; probablemente se nota el salto.")
-    else:
+    cierra = d_union <= d_normal * FACTOR_SALTO + 0.002
+    if cierra:
         print("  Unión del Bucle OK: tan suave como dos fotogramas seguidos.")
+    else:
+        print(f"  AVISO: la unión del Bucle cambia {d_union / max(d_normal, 1e-6):.2f}× más que dos fotogramas "
+              "seguidos; el Montaje la cerrará con un fundido (--fundido-bucle).")
     # Imagen lado a lado de la unión (último fotograma que suena | primero) para revisarla a ojo.
     antes = rutas["penultimo"] if duplicado else rutas["ultimo"]
     ejecutar([
         "ffmpeg", "-v", "error", "-y", "-i", str(antes), "-i", str(rutas["primero"]),
         "-filter_complex", "hstack", str(bucle.parent / "union-bucle.png"),
     ])
-    if (ancho, alto) != (1920, 1080):
-        print(f"  Nota: el Bucle es {ancho}x{alto}; se escalará a 1920x1080.")
-    return frames, fps, duplicado
+    return frames, fps, duplicado, cierra, alto
 
 
-def preparar_bucle(bucle: Path, frames: int, duplicado: bool, destino: Path) -> None:
+def filtro_acabado(alto_origen: int, alto: int) -> str:
+    """Escala a 16:9 con `alto` líneas; si hay que agrandar, lanczos y un enfoque suave."""
+    ancho = alto * 16 // 9
+    filtros = [f"scale={ancho}:{alto}:flags=lanczos:force_original_aspect_ratio=decrease",
+               f"pad={ancho}:{alto}:(ow-iw)/2:(oh-ih)/2"]
+    if alto_origen < alto:
+        filtros.append("unsharp=5:5:0.5:5:5:0")
+    filtros.append("format=yuv420p")
+    return ",".join(filtros)
+
+
+def preparar_bucle(bucle: Path, frames: int, fps: float, duplicado: bool, fundido: float,
+                   acabado: str, destino: Path) -> int:
+    """Deja el Bucle listo para repetirse sin re-codificar. Devuelve los fotogramas de un ciclo.
+
+    Con fundido > 0 cierra el ciclo él mismo: el final del clip se funde con su comienzo, y el
+    ciclo empieza justo donde acaba ese comienzo, así que la repetición no tiene salto.
+    """
     usados = frames - 1 if duplicado else frames
-    filtros = [
-        f"trim=end_frame={usados}", "setpts=PTS-STARTPTS",
-        "scale=1920:1080:force_original_aspect_ratio=decrease",
-        "pad=1920:1080:(ow-iw)/2:(oh-ih)/2", "format=yuv420p",
-    ]
+    if fundido > 0:
+        n_fundido = round(fundido * fps)
+        if n_fundido * 3 > usados:
+            fallar(f"el fundido de {fundido} s es demasiado largo para un Bucle de {usados / fps:.1f} s")
+        grafo = (
+            f"[0:v]trim=end_frame={usados},setpts=PTS-STARTPTS,split[a][b];"
+            f"[a]trim=start_frame={n_fundido},setpts=PTS-STARTPTS[cuerpo];"
+            f"[b]trim=end_frame={n_fundido},setpts=PTS-STARTPTS[cabeza];"
+            f"[cuerpo][cabeza]xfade=transition=fade:duration={n_fundido / fps:.4f}:"
+            f"offset={(usados - 2 * n_fundido) / fps:.4f},{acabado}[v]"
+        )
+        ciclo = usados - n_fundido
+    else:
+        grafo = f"[0:v]trim=end_frame={usados},setpts=PTS-STARTPTS,{acabado}[v]"
+        ciclo = usados
     ejecutar([
         "ffmpeg", "-v", "error", "-y", "-i", str(bucle), "-an",
-        "-vf", ",".join(filtros),
+        "-filter_complex", grafo, "-map", "[v]",
         "-c:v", "libx264", "-preset", "slow", "-crf", "18",
-        "-g", str(usados), "-keyint_min", str(usados), "-sc_threshold", "0",
+        "-g", str(ciclo), "-keyint_min", str(ciclo), "-sc_threshold", "0",
         "-movflags", "+faststart", str(destino),
     ])
+    return ciclo
 
 
 def listar_pistas(carpeta: Path) -> List[Path]:
     return sorted(p for p in (carpeta / "pistas").glob("*") if p.suffix.lower() in EXT_AUDIO)
 
 
-def duracion_audio(ruta: Path) -> float:
-    return float(sondear(ruta)["format"]["duration"])
+def duracion_audio(ruta: Path) -> Tuple[float, float]:
+    """(duración total, duración útil sin el silencio del final)."""
+    total = float(sondear(ruta)["format"]["duration"])
+    res = ejecutar(["ffmpeg", "-hide_banner", "-nostats", "-i", str(ruta),
+                    "-af", "silencedetect=n=-50dB:d=0.5", "-f", "null", "-"])
+    inicios = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", res.stderr)]
+    finales = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", res.stderr)]
+    # Un silencio que llega hasta el final del archivo no tiene silence_end, o lo tiene en `total`.
+    if inicios and (len(finales) < len(inicios) or finales[-1] >= total - 0.1):
+        return total, min(total, inicios[-1] + 0.3)
+    return total, total
 
 
-def construir_audio(secuencia: List[Path], duracion: float, crossfade: float, destino: Path) -> None:
+def construir_audio(secuencia: List[Path], utiles: List[float], duracion: float, crossfade: float,
+                    destino: Path) -> None:
     entradas: List[str] = []
     for p in secuencia:
         entradas += ["-i", str(p)]
-    partes = [f"[{i}:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo[a{i}]"
+    partes = [f"[{i}:a]atrim=0:{utiles[i]:.3f},aresample=48000,"
+              f"aformat=sample_fmts=fltp:channel_layouts=stereo[a{i}]"
               for i in range(len(secuencia))]
     actual = "a0"
     for i in range(1, len(secuencia)):
@@ -196,6 +234,12 @@ def main() -> None:
     ap.add_argument("sesion", help="número de la Sesión (0001) o NNNN-slug")
     ap.add_argument("--duracion", help="duración del Montaje (2h, 90m, 7200s); por defecto la del registro o 2h")
     ap.add_argument("--crossfade", type=float, default=4.0, help="segundos de fundido entre Pistas (4)")
+    ap.add_argument("--fundido-bucle", type=float,
+                    help="segundos de fundido para cerrar el Bucle; por defecto 0 si cierra solo y 1.5 si no")
+    ap.add_argument("--alto", type=int, default=1080, choices=[1080, 1440, 2160],
+                    help="resolución vertical del Montaje (1080); 1440 o 2160 hacen que YouTube use más bitrate")
+    ap.add_argument("--vista-previa", action="store_true",
+                    help="solo genera vista-previa-bucle.mp4 (el Bucle preparado repetido 3 veces) para revisarlo")
     ap.add_argument("--solo-comprobar", action="store_true", help="revisa Bucle y Pistas sin montar")
     args = ap.parse_args()
 
@@ -206,22 +250,43 @@ def main() -> None:
     bucle = carpeta / "bucle.mp4"
     if not bucle.exists():
         fallar(f"falta {bucle.relative_to(RAIZ)}")
-    pistas = listar_pistas(carpeta)
-    if not pistas:
-        fallar(f"no hay Pistas en {(carpeta / 'pistas').relative_to(RAIZ)}/")
+    pistas = listar_pistas(carpeta) if (carpeta / "pistas").exists() else []
 
     with tempfile.TemporaryDirectory() as t:
         tmp = Path(t)
-        frames, fps, duplicado = comprobar_bucle(bucle, tmp)
+        frames, fps, duplicado, cierra, alto_origen = comprobar_bucle(bucle, tmp)
+        acabado = filtro_acabado(alto_origen, args.alto)
+        if alto_origen != args.alto:
+            print(f"  Se reescalará de {alto_origen}p a {args.alto}p (lanczos{' + enfoque suave' if alto_origen < args.alto else ''}).")
+        fundido = args.fundido_bucle if args.fundido_bucle is not None else (0.0 if cierra else 1.5)
+        if fundido:
+            print(f"  Cierre del Bucle: fundido de {fundido} s.")
+        preparado = tmp / "bucle-preparado.mp4"
 
-        duraciones = [duracion_audio(p) for p in pistas]
+        if args.vista_previa:
+            ciclo = preparar_bucle(bucle, frames, fps, duplicado, fundido, acabado, preparado)
+            vista = carpeta / "vista-previa-bucle.mp4"
+            ejecutar(["ffmpeg", "-v", "error", "-y", "-stream_loop", "2", "-i", str(preparado),
+                      "-c", "copy", str(vista)])
+            print(f"Vista previa: {vista.relative_to(RAIZ)} (3 ciclos de {ciclo / fps:.2f} s, sin audio)")
+            return
+
+        if not pistas:
+            if args.solo_comprobar:
+                print("Aún no hay Pistas en pistas/.")
+                return
+            fallar(f"no hay Pistas en {(carpeta / 'pistas').relative_to(RAIZ)}/")
+
+        medidas = [duracion_audio(p) for p in pistas]
+        duraciones = [util for _, util in medidas]  # sin el silencio final de cada Pista
         minimo = min(duraciones)
         if minimo <= args.crossfade * 2:
             fallar(f"hay una Pista de {minimo:.1f} s, demasiado corta para un fundido de {args.crossfade} s")
         banda = sum(duraciones) - args.crossfade * (len(pistas) - 1)
         print(f"Banda sonora: {len(pistas)} Pistas, {marca_tiempo(banda)} por vuelta")
-        for p, d in zip(pistas, duraciones):
-            print(f"  {p.name}: {marca_tiempo(d)}")
+        for p, (total, util) in zip(pistas, medidas):
+            recorte = f" (se recortan {total - util:.1f} s de silencio final)" if total - util > 0.5 else ""
+            print(f"  {p.name}: {marca_tiempo(util)}{recorte}")
         if titulos and len(titulos) != len(pistas):
             print(f"  AVISO: el registro tiene {len(titulos)} títulos y hay {len(pistas)} Pistas; "
                   "los capítulos usarán nombres genéricos.")
@@ -240,12 +305,12 @@ def main() -> None:
         if args.solo_comprobar:
             return
 
-        preparado = tmp / "bucle-preparado.mp4"
         audio = tmp / "audio.m4a"
         print("Preparando el Bucle…")
-        preparar_bucle(bucle, frames, duplicado, preparado)
+        preparar_bucle(bucle, frames, fps, duplicado, fundido, acabado, preparado)
         print("Construyendo la Banda sonora (fundidos + normalización a -14 LUFS)…")
-        construir_audio([pistas[i] for i in secuencia], duracion, args.crossfade, audio)
+        construir_audio([pistas[i] for i in secuencia], [duraciones[i] for i in secuencia],
+                        duracion, args.crossfade, audio)
 
         montaje = carpeta / "montaje.mp4"
         print("Uniendo vídeo y audio…")

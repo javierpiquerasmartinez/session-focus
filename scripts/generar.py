@@ -32,7 +32,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 MODELO_IMAGEN = "gemini-nano-banana-2.1"
 PRECIO_IMAGEN = 0.0504  # por imagen 2K
 MODELO_VIDEO = "gemini-omni-1.2-flash"
-PRECIO_VIDEO_SEGUNDO = 0.104  # por segundo a 1080p
+PRECIO_VIDEO_SEGUNDO = 0.07  # por segundo a 720p (el 1080p de Omni vibra; ver docs/hilo-conductor.md)
 MODELO_MUSICA = "lyria-3.5"
 PRECIO_PISTA = 0.08  # por Pista
 
@@ -147,7 +147,7 @@ def generar_bucle(cliente, imagen: Path, prompt: str, segundos: int, destino: Pa
         model=MODELO_VIDEO,
         # Misma imagen como primer y último fotograma → el clip cierra en bucle.
         input=[fotograma, fotograma, {"type": "text", "text": prompt}],
-        response_format={"type": "video", "aspect_ratio": "16:9", "resolution": "1080p", "duration": f"{segundos}s"},
+        response_format={"type": "video", "aspect_ratio": "16:9", "resolution": "720p", "duration": f"{segundos}s"},
     )
     guardar_salida(cliente, respuesta.output_video, destino)
 
@@ -185,11 +185,12 @@ def main() -> None:
 
     elif args.tipo == "bucle":
         prompts = bloques(texto, "bucle")
-        imagen = carpeta / "imagen.png"
         if not prompts:
             fallar(f"{registro.name} no tiene bloque ```bucle")
-        if not imagen.exists():
-            fallar(f"falta {imagen.relative_to(RAIZ)}: elige primero la imagen")
+        imagenes = [carpeta / f"imagen{ext}" for ext in (".png", ".jpg", ".jpeg")]
+        imagen = next((p for p in imagenes if p.exists()), None)
+        if imagen is None:
+            fallar(f"falta media/{carpeta.name}/imagen.png (o .jpg): elige primero la imagen")
         if not 3 <= args.segundos <= 10:
             fallar("con primer y último fotograma, Omni admite de 3 a 10 s")
         for _ in range(args.n):
@@ -197,7 +198,7 @@ def main() -> None:
             destino.touch()
             trabajos.append((destino, lambda d=destino: generar_bucle(cliente, imagen, prompts[0], args.segundos, d)))
         coste = args.n * args.segundos * PRECIO_VIDEO_SEGUNDO
-        resumen = [f"{args.n} Bucle(s) de {args.segundos} s a 1080p con {MODELO_VIDEO}, a partir de imagen.png"]
+        resumen = [f"{args.n} Bucle(s) de {args.segundos} s a 720p con {MODELO_VIDEO}, a partir de {imagen.name}"]
 
     else:
         prompts = bloques(texto, "pista")

@@ -4,7 +4,6 @@ Escenas candidatas para futuras Sesiones. Al convertir una en Sesión, bórrala 
 
 | # | Idea | Lugar | Hora | Clima | Estación | Punto de vista |
 |---|---|---|---|---|---|---|
-| 1 | Tokio desde un piso 30, lluvia en el cristal, lámpara de escritorio encendida | ciudad | noche | lluvia | otoño | ventana |
 | 2 | Cabaña en un bosque nevado, chimenea encendida, nieve cayendo tras la ventana | bosque | noche | nieve | invierno | ventana |
 | 3 | Puerto pesquero con niebla, faroles de sodio y barcos amarrados meciéndose | costa | noche | niebla | otoño | exterior |
 | 4 | Vagón de tren nocturno, ventanilla mojada, luces de pueblos pasando a lo lejos | campo | noche | lluvia | otoño | vehículo |

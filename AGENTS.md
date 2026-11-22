@@ -1,6 +1,6 @@
 # session-focus
 
-Taller del canal de YouTube **Lamplight** (vídeos de estudio con Escena en bucle y música lofi generadas con IA). El vocabulario está en `GLOSSARY.md`; úsalo al hablar con el usuario y al escribir en el repo. El usuario escribe en español; los prompts y los metadatos de YouTube van en inglés.
+Taller del canal de YouTube **Lamplight Sessions** (@Lamplight-sessions) (vídeos de estudio con Escena en bucle y música lofi generadas con IA). El vocabulario está en `GLOSSARY.md`; úsalo al hablar con el usuario y al escribir en el repo. El usuario escribe en español; los prompts y los metadatos de YouTube van en inglés.
 
 ## Trabajo con Sesiones
 
